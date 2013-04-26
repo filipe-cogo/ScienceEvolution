@@ -1,0 +1,175 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd"
+>
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>br.edu.utfpr.cm</groupId>
+	<artifactId>science-evolution</artifactId>
+	<version>1.0.0</version>
+	<packaging>jar</packaging>
+
+	<name>Science Evolution</name>
+	<inceptionYear>2013</inceptionYear>
+	<url>https://github.com/magsilva/ScienceEvolution</url>
+	<description></description>
+
+	<organization>
+		<name>COCIC-UTFPR-CM</name>
+		<url>http://coint.cm.utfpr.edu.br</url>
+	</organization>
+
+	<licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+			<comments />
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<id>magsilva</id>
+			<name>Marco Aurélio Graciotto Silva</name>
+			<email>magsilva@icmc.usp.br</email>
+			<url>http://www.icmc.usp.br/~magsilva/</url>
+			<organization>Ironia Corporation</organization>
+			<organizationUrl>http://www.ironiacorp.com</organizationUrl>
+			<timezone>+3</timezone>
+			<roles>
+				<role>Manager</role>
+				<role>Main developer</role>
+			</roles>
+		</developer>
+	</developers>
+
+	<repositories>
+		<repository>
+			<id>central</id>
+			<url>http://repo1.maven.org/maven2/</url>
+			<releases>
+				<updatePolicy>never</updatePolicy>
+			</releases>
+		</repository>
+		
+		<repository>
+			<id>IroniaCorp repository</id>
+			<url>dav:http://www.ironiacorp.com/repo/maven2/stable</url>
+			<releases>
+				<updatePolicy>never</updatePolicy>
+			</releases>
+		</repository>
+		
+		<repository>
+			<id>Java.net</id>
+			<url>http://download.java.net/maven/2/</url>
+			<releases>
+				<updatePolicy>never</updatePolicy>
+			</releases>
+		</repository>
+	</repositories>
+
+	<dependencies>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>[4.8,)</version>
+			<type>jar</type>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.tartarus</groupId>
+			<artifactId>snowball</artifactId>
+			<version>[1.0.2,)</version>
+			<type>jar</type>
+			<scope>compile</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>net.sf.jabref</groupId>
+			<artifactId>jabref</artifactId>
+			<version>2.9</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>looks</artifactId>
+					<groupId>com.jgoodies</groupId>
+				</exclusion>
+			</exclusions>
+			<type>jar</type>
+			<scope>compile</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>cc.mallet</groupId>
+			<artifactId>mallet</artifactId>
+			<version>[2.0.7,)</version>
+		</dependency>
+		
+				<!-- Lucene -->
+		<dependency>
+			<groupId>org.apache.lucene</groupId>
+			<artifactId>lucene-core</artifactId>
+			<version>[4.2.0,)</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.lucene</groupId>
+			<artifactId>lucene-analyzers-common</artifactId>
+			<version>[4.2.0,)</version>
+		</dependency>
+            
+		<dependency>
+			<groupId>org.apache.lucene</groupId>
+			<artifactId>lucene-queries</artifactId>
+			<version>[4.2.0,)</version>
+		</dependency>		
+		
+		<dependency>
+			<groupId>org.apache.lucene</groupId>
+			<artifactId>lucene-queryparser</artifactId>
+			<version>[4.2.0,)</version>
+		</dependency>
+		
+	</dependencies>
+
+	<build>
+		<finalName>${project.artifactId}-${project.version}</finalName>
+
+		<directory>target</directory>
+
+		<sourceDirectory>src</sourceDirectory>
+		<testSourceDirectory>test</testSourceDirectory>
+
+		<outputDirectory>target/classes</outputDirectory>
+		<testOutputDirectory>target/test-classes</testOutputDirectory>
+
+		<resources>
+			<resource>
+				<directory>${project.basedir}/resource</directory>
+				<filtering>false</filtering>
+			</resource>
+		</resources>
+
+		<testResources>
+			<testResource>
+				<directory>${project.basedir}/resource</directory>
+				<filtering>false</filtering>
+			</testResource>
+		</testResources>
+
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<fork>true</fork>
+					<meminitial>128m</meminitial>
+					<maxmem>512m</maxmem>
+					<source>1.7</source>
+					<target>1.7</target>
+				</configuration>
+			</plugin>
+		</plugins>			
+	</build>
+</project>
