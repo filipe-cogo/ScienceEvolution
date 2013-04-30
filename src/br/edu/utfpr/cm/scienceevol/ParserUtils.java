@@ -1,11 +1,13 @@
 package br.edu.utfpr.cm.scienceevol;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
-import java.util.Scanner;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.apache.lucene.analysis.util.CharArraySet;
+import org.apache.lucene.util.Version;
 
 public class ParserUtils {
 	private static final String[] ADDITIONAL_STOP_WORDS = { "a's", "able", "about",
@@ -110,7 +112,7 @@ public class ParserUtils {
         "systems", "takes", "technique", "techniques", "test", "tests", "ten", "tool", "tools", "treg", 
         "uff", "understand", "user", "users", "wgwsoa", "works", "xagent"};
 	
-	public static Reader getStopWordList(){
+	public static Reader getStopWordListAsReader(){
 		StringBuffer sb = new StringBuffer();
 		for(String s : ParserUtils.ADDITIONAL_STOP_WORDS){
 			sb.append(s + " ");
@@ -118,5 +120,15 @@ public class ParserUtils {
 		
 		Reader r = new StringReader(sb.toString());
 		return r;
+	}
+	
+	public static CharArraySet getStopWordListAsSet(){
+		CharArraySet set = new CharArraySet(Version.LUCENE_40, Arrays.asList(ParserUtils.ADDITIONAL_STOP_WORDS), true);
+		
+		return set;
+	}
+	
+	public static String[] getStopWordList(){
+		return ParserUtils.ADDITIONAL_STOP_WORDS;
 	}
 }

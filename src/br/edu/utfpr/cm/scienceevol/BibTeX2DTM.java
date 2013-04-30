@@ -117,7 +117,7 @@ public class BibTeX2DTM
 		int id = 0;
 		BufferedWriter dtmMainFile = new BufferedWriter(new FileWriter(dtmFileMain));
 		BufferedWriter dtmAuxFile = new BufferedWriter(new FileWriter(dtmFileAux));
-		Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_42, ParserUtils.getStopWordList());
+		Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_42, ParserUtils.getStopWordListAsSet());
 		ParserResult result = BibtexParser.parse(new FileReader(bibtexFile));
 		Collection<BibtexEntry> entries = result.getDatabase().getEntries();
 		Iterator<BibtexEntry> iterator = entries.iterator();
