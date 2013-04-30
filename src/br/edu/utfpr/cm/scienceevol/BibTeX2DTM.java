@@ -10,6 +10,7 @@ import java.io.StringWriter;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.commons.collections.MultiHashMap;
@@ -20,6 +21,7 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 import org.apache.lucene.analysis.tokenattributes.TypeAttribute;
+import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.util.Version;
 import org.tartarus.snowball.SnowballProgram;
 import org.tartarus.snowball.SnowballStemmer;
@@ -45,6 +47,8 @@ public class BibTeX2DTM
 	private File dtmFileMain;
 
 	private File dtmFileAux;
+	
+	private File dtmFileVocab;
 
 	private String[] fieldsToImport = { "title", "abstract", "keywords" };
 
@@ -62,7 +66,7 @@ public class BibTeX2DTM
 	{
 		cache = new HashMap<String, BibtexEntry>();
 		docs = new MultiHashMap();
-		terms = new HashMap<String, Integer>();
+		terms = new LinkedHashMap<String, Integer>();
 		ids = new HashMap<String, String>();
 	}
 	
@@ -79,6 +83,7 @@ public class BibTeX2DTM
 		this.bibtexFile = new File(baseDir, name + BIB_EXTENSION);
 		this.dtmFileMain = new File(baseDir, name + "_mult" + DTM_EXTENSION);
 		this.dtmFileAux = new File(baseDir, name + "_seq" + DTM_EXTENSION);
+		this.dtmFileVocab = new File(baseDir, name + "_vocab" + DTM_EXTENSION);
 	}
 	
 
@@ -112,7 +117,7 @@ public class BibTeX2DTM
 		int id = 0;
 		BufferedWriter dtmMainFile = new BufferedWriter(new FileWriter(dtmFileMain));
 		BufferedWriter dtmAuxFile = new BufferedWriter(new FileWriter(dtmFileAux));
-		Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_42);
+		Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_42, ParserUtils.getStopWordList());
 		ParserResult result = BibtexParser.parse(new FileReader(bibtexFile));
 		Collection<BibtexEntry> entries = result.getDatabase().getEntries();
 		Iterator<BibtexEntry> iterator = entries.iterator();
@@ -129,8 +134,6 @@ public class BibTeX2DTM
 
 			StringWriter writer = new StringWriter();
 			BufferedWriter buffer = new BufferedWriter(writer);
-			
-			
 			
 			for (String field : fieldsToImport) {
 				String value = bibtexEntry.getField(field);
@@ -168,32 +171,56 @@ public class BibTeX2DTM
 				}
 			}
 		}
+		/*
+		BufferedWriter bwMain = new BufferedWriter(new FileWriter(this.dtmFileMain));
+		BufferedWriter bwAux = new BufferedWriter(new FileWriter(this.dtmFileAux));
 		
 		try {
+			bwAux.write("9\n");
 			for (int i = 2004; i < 2013; i++) {
+				int j = 0;
 				Iterator<BibtexEntry> iDocs = docs.keySet().iterator();
 				while (iDocs.hasNext()) {
 					BibtexEntry entry = iDocs.next();
 					if (entry.getField("year").equals(Integer.toString(i))) {
-						System.out.print(docs.getCollection(entry).size());
+						j++;
+						//System.out.print(docs.getCollection(entry).size());
+						bwMain.write(Integer.toString(docs.getCollection(entry).size()));
 						Iterator<String> iWords = docs.iterator(entry);
 						while (iWords.hasNext()) {
 							String word2 = iWords.next();
-							System.out.print(" " + ids.get(word2) + ":" + terms.get(word2));
+							//System.out.print(" " + ids.get(word2) + ":" + terms.get(word2));
+							bwMain.write(" " + ids.get(word2) + ":" + terms.get(word2));
 						}
-						System.out.println();
+						bwMain.write("\n");
+						//System.out.println();
 					}
 				}
+				bwAux.write(j + "\n");
 			}
+			
+			BufferedWriter bwVocab = new BufferedWriter(new FileWriter(this.dtmFileVocab));
+			
+			Iterator<String> iTerms = terms.keySet().iterator();
+			while (iTerms.hasNext()) {
+				String s = iTerms.next();
+				bwVocab.write(s + "\n");
+				//System.out.print(s + "\n");
+			}
+			
 			dtmMainFile.flush();
 			dtmMainFile.close();
+			bwMain.close();
+			bwAux.close();
+			bwVocab.close();
 		} catch (IOException e) {
 		}
+		*/
 	}
 	
 	public static void main(String[] args) throws IOException {
 		BibTeX2DTM b = new BibTeX2DTM();
-		b.setBibtexFile(new File("/home/magsilva/Dropbox/Papers/10thSBSC/sci2/SBSC.bib"));
+		b.setBibtexFile(new File("/Users/filiperoseirocogo/Dropbox/Anais SBSC/sci2/SBSC.bib"));
 		b.convert();
 	}
 }
