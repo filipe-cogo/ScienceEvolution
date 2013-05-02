@@ -90,7 +90,24 @@
 			<version>[2.0.7,)</version>
 		</dependency>
 		
-				<!-- Lucene -->
+		
+		<!-- SnowBall -->
+		<dependency>
+		    <groupId>org.tartarus</groupId>
+		    <artifactId>snowball</artifactId>
+		    <version>[1.0.2,)</version>
+		</dependency>
+		
+		
+		<!-- JabRef -->
+		<dependency>
+		    <groupId>net.sf.jabref</groupId>
+		    <artifactId>jabref</artifactId>
+		    <version>[2.9,]</version>
+		</dependency>
+		
+		
+		<!-- Lucene -->
 		<dependency>
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-core</artifactId>
@@ -150,8 +167,8 @@
 					<fork>true</fork>
 					<meminitial>128m</meminitial>
 					<maxmem>512m</maxmem>
-					<source>1.6</source>
-					<target>1.6</target>
+					<source>1.7</source>
+					<target>1.7</target>
 				</configuration>
 			</plugin>
 		</plugins>			
