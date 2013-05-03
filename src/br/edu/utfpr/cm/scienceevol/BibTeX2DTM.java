@@ -185,17 +185,17 @@ public class BibTeX2DTM
 		Analyzer analyzer;
 		StopWordFilter spwFilter;
 		
-		// Prepare Lucene (with stopwords)
-		spwFilter = new StopWordFilter();
-		spwFilter.loadDefaultStopwords();
-		analyzer = new StandardAnalyzer(Version.LUCENE_42, spwFilter.getStopWordListAsSet());
-		
 		// Prepare stemmer
 		try {
 			Class<?> stemClass = Class.forName("org.tartarus.snowball.ext." + "porter" + "Stemmer");
-			stemmer = (SnowballStemmer) stemClass.newInstance();	
+			// stemmer = (SnowballStemmer) stemClass.newInstance();	
 		} catch (Exception e) {}
 		
+		// Prepare Lucene (with stopwords)
+		spwFilter = new StopWordFilter();
+		// spwFilter.setStemmer(stemmer);
+		spwFilter.loadDefaultStopwords();
+		analyzer = new StandardAnalyzer(Version.LUCENE_42, spwFilter.getStopWordListAsSet());
 		
 		// Read data and sort entries by date (1st) and title (2nd)
 		result = BibtexParser.parse(new InputStreamReader(input));
@@ -219,10 +219,12 @@ public class BibTeX2DTM
 					while (stream.incrementToken()){
 						// Get word and process it (stopword and stemmize)
 						String word = new String(term.buffer(), 0, term.length());
-						stemmer.setCurrent(word);
-						stemmer.stem();
-						word = stemmer.getCurrent();
-						
+						if (stemmer != null) {
+							stemmer.setCurrent(word);
+							stemmer.stem();
+							word = stemmer.getCurrent();
+						}
+							
 						// Account for word in the document
 						if (entryTerms.containsKey(word)) {
 							entryTerms.put(word, entryTerms.get(word) + 1);

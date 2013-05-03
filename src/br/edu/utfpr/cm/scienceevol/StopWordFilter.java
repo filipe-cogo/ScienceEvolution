@@ -9,10 +9,13 @@ import java.util.TreeSet;
 
 import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.util.Version;
+import org.tartarus.snowball.SnowballStemmer;
 
 
 public class StopWordFilter
 {
+	private SnowballStemmer stemmer;
+	
 	private static final String[] DEFAULT_STOPWORD_FILES = {
 		"stopwords-1.txt",
 		"stopwords-2.txt",
@@ -41,6 +44,11 @@ public class StopWordFilter
 			String word = null;
 			try {
 				while ((word = reader.readLine()) != null) {
+					if (stemmer != null){
+						stemmer.setCurrent(word);
+						stemmer.stem();
+						word = stemmer.getCurrent();
+					}
 					stopwords.add(word);
 				}
 			} catch (IOException e) {
@@ -49,6 +57,14 @@ public class StopWordFilter
 		}
 	}
 	
+	public SnowballStemmer getStemmer() {
+		return stemmer;
+	}
+
+	public void setStemmer(SnowballStemmer stemmer) {
+		this.stemmer = stemmer;
+	}
+
 	public CharArraySet getStopWordListAsSet(){
 		CharArraySet set = new CharArraySet(Version.LUCENE_42, stopwords, true);
 		return set;
