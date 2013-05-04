@@ -2,13 +2,13 @@ package br.edu.utfpr.cm.scienceevol;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -17,14 +17,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.util.Version;
-import org.tartarus.snowball.SnowballStemmer;
+import lode.miner.extraction.TypedResourceConsumerStub;
+import lode.miner.extraction.txt.TextStreamTokenizer;
+import lode.miner.extraction.txt.UnformattedPlainTextStreamTokenizer;
+import lode.model.text.UnformattedTextResource;
 
 import net.sf.jabref.BibtexEntry;
+import net.sf.jabref.BibtexEntryType;
 import net.sf.jabref.imports.BibtexParser;
 import net.sf.jabref.imports.ParserResult;
 
@@ -58,7 +57,7 @@ public class BibTeX2DTM
 	
 	private static final String DTM_DOCS_PREFIX = "-docs";
 	
-	private InputStream input;
+	private List<InputStream> inputs;
 
 	private File dtmFileMain;
 
@@ -76,33 +75,28 @@ public class BibTeX2DTM
 	
 	private Map<String, Integer> terms;
 	
+	private File baseDir;
+	
+	private String prefixName;
+	
 	public BibTeX2DTM()
 	{
 		terms = new HashMap<String, Integer>();
 		corpus = new HashMap<BibtexEntry, Map<String, Integer>>();
+		inputs = new ArrayList<InputStream>();
+		entries = new ArrayList<BibtexEntry>();
 	}
 	
-	public void setBibtexFile(File file)
-	{
-		if (file == null || !file.exists()) {
-			throw new IllegalArgumentException("Invalid BibTeX file");
-		}
-
-		String baseDir = file.getParent();
-		String name = file.getName();
-		name = name.substring(0, name.lastIndexOf("."));
-		
-		try {
-			setInputStream(new FileInputStream(file), new File(baseDir), name);
-		} catch (Exception e) {
-			throw new IllegalArgumentException(e);
-		}
-
-	}
 	
-	public void setInputStream(InputStream is, File baseDir, String prefixName)
+	
+	public void addInputStream(InputStream is) {
+		inputs.add(is);
+	}
+
+
+
+	private void setNames()
 	{
-		input = is;
 		dtmFileMain = new File(baseDir, prefixName + DTM_CORPUS_PREFIX + DTM_EXTENSION);
 		dtmFileAux = new File(baseDir, prefixName + DTM_SEQUENCE_PREFIX + DTM_EXTENSION);
 		dtmFileVocab = new File(baseDir, prefixName + DTM_TERMS_PREFIX + DTM_EXTENSION);
@@ -112,6 +106,7 @@ public class BibTeX2DTM
 
 	public void write() throws IOException
 	{
+		setNames();
 		BufferedWriter corpusWriter = new BufferedWriter(new FileWriter(dtmFileMain));
 		BufferedWriter seqWriter = new BufferedWriter(new FileWriter(dtmFileAux));
 		BufferedWriter termsWriter = new BufferedWriter(new FileWriter(dtmFileVocab));
@@ -180,51 +175,42 @@ public class BibTeX2DTM
 	public void read() throws IOException
 	{
 		int id = 1;
-		SnowballStemmer stemmer = null;
-		ParserResult result;
-		Analyzer analyzer;
-		StopWordFilter spwFilter;
-		
-		// Prepare stemmer
-		try {
-			Class<?> stemClass = Class.forName("org.tartarus.snowball.ext." + "porter" + "Stemmer");
-			// stemmer = (SnowballStemmer) stemClass.newInstance();	
-		} catch (Exception e) {}
-		
-		// Prepare Lucene (with stopwords)
-		spwFilter = new StopWordFilter();
-		// spwFilter.setStemmer(stemmer);
-		spwFilter.loadDefaultStopwords();
-		analyzer = new StandardAnalyzer(Version.LUCENE_42, spwFilter.getStopWordListAsSet());
-		
+
 		// Read data and sort entries by date (1st) and title (2nd)
-		result = BibtexParser.parse(new InputStreamReader(input));
-		entries = new ArrayList<BibtexEntry>(result.getDatabase().getEntries());
+		for (InputStream is : inputs) {
+			ParserResult result = BibtexParser.parse(new InputStreamReader(is));
+			Collection<BibtexEntry> entries = result.getDatabase().getEntries();
+			Iterator<BibtexEntry> iterator= entries.iterator();
+			while (iterator.hasNext()) {
+				BibtexEntry entry = iterator.next();
+				if (entry.getType().equals(BibtexEntryType.INPROCEEDINGS)) {
+					this.entries.add(entry);
+				}
+			}
+		}
 		Collections.sort(entries, new BibTexEntryComparator());
 		
-		// Process files
+		TextStreamTokenizer parser = new UnformattedPlainTextStreamTokenizer();
+		TypedResourceConsumerStub<UnformattedTextResource> consumer = new TypedResourceConsumerStub<UnformattedTextResource>(UnformattedTextResource.class);
+		PipelinePreprocessor preprocessor = new PipelinePreprocessor();
+		parser.setConsumer(consumer);
+		     
+        // Process files
 		Iterator<BibtexEntry> iterator= entries.iterator();
 		while (iterator.hasNext()) {
 			BibtexEntry entry = iterator.next();
 			Map<String, Integer> entryTerms = new LinkedHashMap<String, Integer>();
-				
 			corpus.put(entry, entryTerms);
 			for (String field : fieldsToImport) {
 				String value = entry.getField(field);
 				if (value != null && ! value.trim().isEmpty()) {
-					TokenStream stream = analyzer.tokenStream("contents", new StringReader(value));
-					CharTermAttribute term = stream.addAttribute(CharTermAttribute.class);
-
-					stream.reset();
-					while (stream.incrementToken()){
-						// Get word and process it (stopword and stemmize)
-						String word = new String(term.buffer(), 0, term.length());
-						if (stemmer != null) {
-							stemmer.setCurrent(word);
-							stemmer.stem();
-							word = stemmer.getCurrent();
-						}
-							
+					parser.setReader(new StringReader(value));
+					parser.setConsumer(preprocessor.getStart());
+					preprocessor.getEnd().setConsumer(consumer);
+					parser.start();
+					parser.stop();
+					String[] words = consumer.getWords();
+					for (String word : words) {
 						// Account for word in the document
 						if (entryTerms.containsKey(word)) {
 							entryTerms.put(word, entryTerms.get(word) + 1);
@@ -238,18 +224,55 @@ public class BibTeX2DTM
 							id++;
 						}
 					}
+					parser.reset();
 				}
 			}
 		}
-		
-		analyzer.close();
-
 	}
 	
+	public File getBaseDir() {
+		return baseDir;
+	}
+
+
+
+	public void setBaseDir(File baseDir) {
+		this.baseDir = baseDir;
+	}
+
+
+
+	public String getPrefixName() {
+		return prefixName;
+	}
+
+
+
+	public void setPrefixName(String prefixName) {
+		this.prefixName = prefixName;
+	}
+
+
+
 	public static void main(String[] args) throws IOException {
 		BibTeX2DTM b = new BibTeX2DTM();
-		InputStream is = BibTeX2DTM.class.getResourceAsStream("/SBSC.bib");
-		b.setInputStream(is, new File("/tmp"), "SBSC");
+		String files[] = {
+				"SBSC-2004.bib",
+				"SBSC-2005.bib",
+				"SBSC-2006.bib",
+				"SBSC-2007.bib",
+				"SBSC-2008.bib",
+				"SBSC-2009.bib",
+				"SBSC-2010.bib",
+				"SBSC-2011.bib",
+				"SBSC-2012.bib",
+		};
+		b.setBaseDir(new File("/tmp"));
+		b.setPrefixName("SBSC");
+		for (String file : files) {
+			InputStream is = BibTeX2DTM.class.getResourceAsStream("/" + file);
+			b.addInputStream(is);
+		}
 		b.read();
 		b.write();
 	}

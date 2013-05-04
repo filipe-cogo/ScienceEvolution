@@ -78,12 +78,20 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- 
 		<dependency>
-			<groupId>commons-collections</groupId>
-			<artifactId>commons-collections</artifactId>
-			<version>3.2.1</version>
+			<groupId>lode</groupId>
+			<artifactId>lode-miner</artifactId>
+			<version>0.4.0-SNAPSHOT</version>
 		</dependency>
 
+		<dependency>
+			<groupId>lode</groupId>
+			<artifactId>lode-model</artifactId>
+			<version>0.4.0-SNAPSHOT</version>
+		</dependency>
+		-->
+		
 		<dependency>
 			<groupId>cc.mallet</groupId>
 			<artifactId>mallet</artifactId>
