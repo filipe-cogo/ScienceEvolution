@@ -1,8 +1,10 @@
 package br.edu.utfpr.cm.scienceevol;
 
 import java.io.File;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import lode.miner.BufferComponent;
+import lode.miner.ConditionalDupComponent;
 import lode.miner.ConsumerComponent;
 import lode.miner.FilterComponent;
 import lode.miner.ProducerComponent;
@@ -24,7 +26,6 @@ import lode.miner.preprocessing.text.normalizer.LodeNormalizer;
 import lode.miner.preprocessing.text.normalizer.Normalizer;
 import lode.miner.preprocessing.text.normalizer.NormalizerComponent;
 import lode.miner.preprocessing.text.stemmer.MorphaStemmer;
-import lode.miner.preprocessing.text.stemmer.SnowballEnglishStemmer;
 import lode.miner.preprocessing.text.stemmer.Stemmer;
 import lode.miner.preprocessing.text.stemmer.StemmerTransformer;
 import lode.miner.preprocessing.text.stopword.StopWord;
@@ -39,6 +40,12 @@ public class PipelinePreprocessor
 	private ConsumerComponent start;
 	
 	private ProducerComponent end;
+	
+	private AtomicBoolean useStemmer;
+	
+	private AtomicBoolean useStopwords;
+
+	private AtomicBoolean useLUCut;
 	
 	public ConsumerComponent getStart() {
 		return start;
@@ -55,9 +62,39 @@ public class PipelinePreprocessor
 	public void setEnd(ProducerComponent end) {
 		this.end = end;
 	}
+	
+	public boolean isUseStemmer() {
+		return useStemmer.get();
+	}
+
+	public void setUseStemmer(boolean useStemmer) {
+		this.useStemmer.set(useStemmer);
+	}
+
+	public boolean isUseStopwords() {
+		return useStopwords.get();
+	}
+
+	public void setUseStopwords(boolean useStopwords) {
+		this.useStopwords.set(useStopwords);
+	}
+	
+	public boolean isLUCut() {
+		return useLUCut.get();
+	}
+
+	public void setLUCut(boolean useLUCut) {
+		this.useLUCut.set(useLUCut);
+	}
 
 	public PipelinePreprocessor()
 	{
+		useStemmer = new AtomicBoolean();
+		useStopwords = new AtomicBoolean();
+		useLUCut = new AtomicBoolean();
+		useStemmer.set(true);
+		useStopwords.set(true);
+		useLUCut.set(true);
 		setupPipeline();
 	}
 	
@@ -88,6 +125,9 @@ public class PipelinePreprocessor
 		// Stemmer stemmer = new SnowballEnglishStemmer();
 		Stemmer stemmer = new MorphaStemmer();
 		BufferComponent bufferComponent = new BufferComponent();
+		ConditionalDupComponent stemmerDecision = new ConditionalDupComponent();
+		ConditionalDupComponent stopwordDecision = new ConditionalDupComponent();
+		ConditionalDupComponent lucutDecision = new ConditionalDupComponent();
 		
 
 		start = emptyWordFilter;
@@ -122,9 +162,13 @@ public class PipelinePreprocessor
 				
 		// Try to remove some plurals
 		wordSingularizer.setNormalizer(normalizer);
-		wordSingularizer.setConsumer(luCutWordFilter);
+		wordSingularizer.setConsumer(lucutDecision);
 		
 		// Remove words that are too short or too long
+		lucutDecision.setCondition(useLUCut);
+		lucutDecision.setConsumerTrue(luCutWordFilter);
+		lucutDecision.setConsumerFalse(adverbFilter);
+		
 		luCutWordFilter.setLowCut(1);
 		luCutWordFilter.setUpCut(100);
 		luCutWordFilter.setConsumer(adverbFilter);
@@ -139,18 +183,26 @@ public class PipelinePreprocessor
 		utf8Remover.setConsumer(versionFilter);
 
 		// Remove strings that represents the version of a software
-		versionFilter.setConsumer(stopwordFilter);
+		versionFilter.setConsumer(stopwordDecision);
 		
+		stopwordDecision.setCondition(useStopwords);
+		stopwordDecision.setConsumerTrue(stopwordFilter);
+		stopwordDecision.setConsumerFalse(stemmerDecision);
+
 		// Remove stopwords
 		stopwordLoader.loadLanguage(stopwords, "/run/media/magsilva/magsilva-1TB/Projects/Lode/lode-miner/resources/", "en");
 		stopwordLoader.loadLanguage(stopwords, "/run/media/magsilva/magsilva-1TB/Projects/Lode/lode-miner/resources/", "latin");
 		stopwordLoader.load(stopwords, new File("/run/media/magsilva/magsilva-1TB/Projects/ScienceEvolution/resources/stopwords/stopwords-sbsc.txt"));
 		stopwordFilter.setStopWord(stopwords);
-		stopwordFilter.setConsumer(stemmerTransformer);
+		stopwordFilter.setConsumer(stemmerDecision);
 		
+    	stemmerDecision.setCondition(useStemmer);
+    	stemmerDecision.setConsumerTrue(stemmerTransformer);
+    	stemmerDecision.setConsumerFalse(bufferComponent);
+
+    	stemmerDecision.setConsumer(stemmerTransformer);
 		stemmerTransformer.setStemmer(stemmer);
 		stemmerTransformer.setConsumer(bufferComponent);
-				
 				
 		end = bufferComponent;
 	}

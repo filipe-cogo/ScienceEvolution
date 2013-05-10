@@ -2,10 +2,12 @@ package br.edu.utfpr.cm.scienceevol;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,6 +19,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import lode.miner.BufferComponent;
 import lode.miner.extraction.TypedResourceConsumerStub;
 import lode.miner.extraction.txt.TextStreamTokenizer;
 import lode.miner.extraction.txt.UnformattedPlainTextStreamTokenizer;
@@ -39,7 +42,18 @@ public class BibTeX2DTM
 			if (year1 == year2) {
 				String title1 = entry1.getField("title");
 				String title2 = entry1.getField("title");
-				return title1.compareTo(title2);
+				if (title1 == null || title2 == null) {
+					if (title1 == null && title2 == null) {
+						return entry1.getCiteKey().compareTo(entry2.getCiteKey());
+					}
+					if (title1 == null) {
+						return -1;
+					} else {
+						return 1;
+					}
+				} else {
+					return title1.compareTo(title2);
+				}
 			} else {
 				return year1 - year2;
 			}
@@ -59,13 +73,13 @@ public class BibTeX2DTM
 	
 	private List<InputStream> inputs;
 
-	private File dtmFileMain;
-
-	private File dtmFileAux;
+	private OutputStream dtmMain;
 	
-	private File dtmFileVocab;
+	private OutputStream dtmAux;
 	
-	private File dtmFileDocs;
+	private OutputStream dtmVocab;
+	
+	private OutputStream dtmDocs;
 
 	private String[] fieldsToImport = { "title", "abstract", "keywords" };
 	
@@ -75,13 +89,15 @@ public class BibTeX2DTM
 	
 	private Map<String, Integer> terms;
 	
-	private File baseDir;
+	private boolean useStopwords = true;
 	
-	private String prefixName;
+	private boolean useStemmer = true;
+	
+	private boolean useLUCut = true;
 	
 	public BibTeX2DTM()
 	{
-		terms = new HashMap<String, Integer>();
+		terms = new LinkedHashMap<String, Integer>();
 		corpus = new HashMap<BibtexEntry, Map<String, Integer>>();
 		inputs = new ArrayList<InputStream>();
 		entries = new ArrayList<BibtexEntry>();
@@ -93,24 +109,95 @@ public class BibTeX2DTM
 		inputs.add(is);
 	}
 
+	
+
+	public OutputStream getDtmMain() {
+		return dtmMain;
+	}
+
+	public void setDtmMain(OutputStream dtmMain) {
+		this.dtmMain = dtmMain;
+	}
+
+	public OutputStream getDtmAux() {
+		return dtmAux;
+	}
+
+	public void setDtmAux(OutputStream dtmAux) {
+		this.dtmAux = dtmAux;
+	}
+
+	public OutputStream getDtmVocab() {
+		return dtmVocab;
+	}
+
+	public void setDtmVocab(OutputStream dtmVocab) {
+		this.dtmVocab = dtmVocab;
+	}
+
+	public OutputStream getDtmDocs() {
+		return dtmDocs;
+	}
+
+	public void setDtmDocs(OutputStream dtmDocs) {
+		this.dtmDocs = dtmDocs;
+	}
+
+	public boolean isUseStopwords() {
+		return useStopwords;
+	}
 
 
-	private void setNames()
+
+	public void setUseStopwords(boolean useStopwords) {
+		this.useStopwords = useStopwords;
+	}
+
+
+
+	public boolean isUseStemmer() {
+		return useStemmer;
+	}
+
+	public void setUseStemmer(boolean useStemmer) {
+		this.useStemmer = useStemmer;
+	}
+	
+
+	public boolean isLUCut() {
+		return useLUCut;
+	}
+
+	public void setLUCut(boolean useLUCut) {
+		this.useLUCut = useLUCut;
+	}
+
+
+
+	public void setDefaultOutputStreams(File baseDir, String prefixName)
 	{
-		dtmFileMain = new File(baseDir, prefixName + DTM_CORPUS_PREFIX + DTM_EXTENSION);
-		dtmFileAux = new File(baseDir, prefixName + DTM_SEQUENCE_PREFIX + DTM_EXTENSION);
-		dtmFileVocab = new File(baseDir, prefixName + DTM_TERMS_PREFIX + DTM_EXTENSION);
-		dtmFileDocs = new File(baseDir, prefixName + DTM_DOCS_PREFIX + DTM_EXTENSION);
+		File dtmFileMain = new File(baseDir, prefixName + DTM_CORPUS_PREFIX + DTM_EXTENSION);
+		File dtmFileAux = new File(baseDir, prefixName + DTM_SEQUENCE_PREFIX + DTM_EXTENSION);
+		File dtmFileVocab = new File(baseDir, prefixName + DTM_TERMS_PREFIX + DTM_EXTENSION);
+		File dtmFileDocs = new File(baseDir, prefixName + DTM_DOCS_PREFIX + DTM_EXTENSION);
+		
+		try {
+			dtmMain = new FileOutputStream(dtmFileMain);
+			dtmAux = new FileOutputStream(dtmFileAux);
+			dtmVocab = new FileOutputStream(dtmFileVocab);
+			dtmDocs = new FileOutputStream(dtmFileDocs);
+		} catch (IOException e) {
+			throw new IllegalArgumentException(e);
+		}
 	}
 	
 
 	public void write() throws IOException
 	{
-		setNames();
-		BufferedWriter corpusWriter = new BufferedWriter(new FileWriter(dtmFileMain));
-		BufferedWriter seqWriter = new BufferedWriter(new FileWriter(dtmFileAux));
-		BufferedWriter termsWriter = new BufferedWriter(new FileWriter(dtmFileVocab));
-		BufferedWriter docsWriter = new BufferedWriter(new FileWriter(dtmFileDocs));
+		BufferedWriter corpusWriter = new BufferedWriter(new OutputStreamWriter(dtmMain));
+		BufferedWriter seqWriter = new BufferedWriter(new OutputStreamWriter(dtmAux));
+		BufferedWriter termsWriter = new BufferedWriter(new OutputStreamWriter(dtmVocab));
+		BufferedWriter docsWriter = new BufferedWriter(new OutputStreamWriter(dtmDocs));
 		List<Integer> periods = new ArrayList<Integer>();
 		int currentYear = 0;
 		int docsPerPeriod = 0;
@@ -139,11 +226,15 @@ public class BibTeX2DTM
 				String word = iWords.next();
 				corpusWriter.write(" " + terms.get(word) + ":" + entryTerms.get(word));
 			}
-			corpusWriter.write('\n');
+			if (iDocs.hasNext()) {
+				corpusWriter.write('\n');
+			}
 			
 			// Write document date
 			docsWriter.write(entry.getCiteKey());
-			docsWriter.write('\n');
+			if (iDocs.hasNext()) {
+				docsWriter.write('\n');
+			}
 		}
 		// Add the last period
 		periods.add(docsPerPeriod);
@@ -155,7 +246,9 @@ public class BibTeX2DTM
 		while (iPeriods.hasNext()) {
 			docsPerPeriod = iPeriods.next();
 			seqWriter.write(Integer.toString(docsPerPeriod));
-			seqWriter.write('\n');
+			if (iPeriods.hasNext()) {
+				seqWriter.write('\n');
+			}
 		}
 		
 		// Write vocabulary
@@ -163,12 +256,18 @@ public class BibTeX2DTM
 		while (iTerms.hasNext()) {
 			String s = iTerms.next();
 			termsWriter.write(s);
-			termsWriter.write('\n');
+			if (iTerms.hasNext()) {
+				termsWriter.write('\n');
+			}
 		}
 			
+		corpusWriter.flush();
 		corpusWriter.close();
+		seqWriter.flush();
 		seqWriter.close();
+		termsWriter.flush();
 		termsWriter.close();
+		docsWriter.flush();
 		docsWriter.close();
 	}
 	
@@ -179,22 +278,18 @@ public class BibTeX2DTM
 		// Read data and sort entries by date (1st) and title (2nd)
 		for (InputStream is : inputs) {
 			ParserResult result = BibtexParser.parse(new InputStreamReader(is));
-			Collection<BibtexEntry> entries = result.getDatabase().getEntries();
-			Iterator<BibtexEntry> iterator= entries.iterator();
+			Collection<BibtexEntry> currentEntries = result.getDatabase().getEntries();
+			Iterator<BibtexEntry> iterator= currentEntries.iterator();
 			while (iterator.hasNext()) {
 				BibtexEntry entry = iterator.next();
 				if (entry.getType().equals(BibtexEntryType.INPROCEEDINGS)) {
-					this.entries.add(entry);
+					entries.add(entry);
 				}
 			}
 		}
 		Collections.sort(entries, new BibTexEntryComparator());
 		
-		TextStreamTokenizer parser = new UnformattedPlainTextStreamTokenizer();
-		TypedResourceConsumerStub<UnformattedTextResource> consumer = new TypedResourceConsumerStub<UnformattedTextResource>(UnformattedTextResource.class);
-		PipelinePreprocessor preprocessor = new PipelinePreprocessor();
-		parser.setConsumer(consumer);
-		     
+		
         // Process files
 		Iterator<BibtexEntry> iterator= entries.iterator();
 		while (iterator.hasNext()) {
@@ -204,8 +299,19 @@ public class BibTeX2DTM
 			for (String field : fieldsToImport) {
 				String value = entry.getField(field);
 				if (value != null && ! value.trim().isEmpty()) {
+					TextStreamTokenizer parser = new UnformattedPlainTextStreamTokenizer();
+					TypedResourceConsumerStub<UnformattedTextResource> consumer = new TypedResourceConsumerStub<UnformattedTextResource>(UnformattedTextResource.class);
+					PipelinePreprocessor preprocessor = new PipelinePreprocessor();
+					
+					BufferComponent buffer = new BufferComponent();
+					
+					preprocessor.setUseStemmer(useStemmer);
+					preprocessor.setUseStopwords(useStopwords);
+					preprocessor.setLUCut(useLUCut);
+					parser.setConsumer(consumer);
 					parser.setReader(new StringReader(value));
-					parser.setConsumer(preprocessor.getStart());
+					parser.setConsumer(buffer);
+					buffer.setConsumer(preprocessor.getStart());
 					preprocessor.getEnd().setConsumer(consumer);
 					parser.start();
 					parser.stop();
@@ -230,30 +336,6 @@ public class BibTeX2DTM
 		}
 	}
 	
-	public File getBaseDir() {
-		return baseDir;
-	}
-
-
-
-	public void setBaseDir(File baseDir) {
-		this.baseDir = baseDir;
-	}
-
-
-
-	public String getPrefixName() {
-		return prefixName;
-	}
-
-
-
-	public void setPrefixName(String prefixName) {
-		this.prefixName = prefixName;
-	}
-
-
-
 	public static void main(String[] args) throws IOException {
 		BibTeX2DTM b = new BibTeX2DTM();
 		String files[] = {
@@ -267,8 +349,7 @@ public class BibTeX2DTM
 				"SBSC-2011.bib",
 				"SBSC-2012.bib",
 		};
-		b.setBaseDir(new File("/tmp"));
-		b.setPrefixName("SBSC");
+		b.setDefaultOutputStreams(new File("/tmp"), "SBSC");
 		for (String file : files) {
 			InputStream is = BibTeX2DTM.class.getResourceAsStream("/" + file);
 			b.addInputStream(is);
