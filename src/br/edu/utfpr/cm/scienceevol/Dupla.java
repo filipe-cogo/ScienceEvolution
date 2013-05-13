@@ -1,4 +1,4 @@
-package br.edu.utfpr.cm.questan.main;
+package br.edu.utfpr.cm.scienceevol;
 
 public class Dupla<X, Y> {
 	private X x;

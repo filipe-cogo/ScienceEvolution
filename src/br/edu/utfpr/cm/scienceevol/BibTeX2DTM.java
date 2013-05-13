@@ -19,11 +19,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import lode.miner.BufferComponent;
-import lode.miner.extraction.TypedResourceConsumerStub;
+
 import lode.miner.extraction.txt.TextStreamTokenizer;
 import lode.miner.extraction.txt.UnformattedPlainTextStreamTokenizer;
-import lode.model.text.UnformattedTextResource;
 
 import net.sf.jabref.BibtexEntry;
 import net.sf.jabref.BibtexEntryType;
@@ -61,16 +59,6 @@ public class BibTeX2DTM
 		
 	}
 	
-	private static final String DTM_EXTENSION = ".dat";
-	
-	private static final String DTM_CORPUS_PREFIX = "-mult";
-
-	private static final String DTM_SEQUENCE_PREFIX = "-seq";
-	
-	private static final String DTM_TERMS_PREFIX = "-vocab";
-	
-	private static final String DTM_DOCS_PREFIX = "-docs";
-	
 	private List<InputStream> inputs;
 
 	private OutputStream dtmMain;
@@ -89,11 +77,17 @@ public class BibTeX2DTM
 	
 	private Map<String, Integer> terms;
 	
+	private List<Integer> periods;
+	
 	private boolean useStopwords = true;
 	
 	private boolean useStemmer = true;
 	
 	private boolean useLUCut = true;
+	
+	private File basedir;
+	
+	private String corpusName;
 	
 	public BibTeX2DTM()
 	{
@@ -103,7 +97,17 @@ public class BibTeX2DTM
 		entries = new ArrayList<BibtexEntry>();
 	}
 	
-	
+	public Corpus getCorpus()
+	{
+		Corpus corpus = new Corpus();
+		corpus.setTermsCount(terms.size());
+		corpus.setDocumentsCount(entries.size());
+		corpus.setYearsCount(periods.size());
+		corpus.setBasedir(basedir);
+		corpus.setName(corpusName);
+		
+		return corpus;
+	}
 	
 	public void addInputStream(InputStream is) {
 		inputs.add(is);
@@ -174,12 +178,14 @@ public class BibTeX2DTM
 
 
 
-	public void setDefaultOutputStreams(File baseDir, String prefixName)
+	public void setDefaultOutputStreams(File baseDir, String corpusName)
 	{
-		File dtmFileMain = new File(baseDir, prefixName + DTM_CORPUS_PREFIX + DTM_EXTENSION);
-		File dtmFileAux = new File(baseDir, prefixName + DTM_SEQUENCE_PREFIX + DTM_EXTENSION);
-		File dtmFileVocab = new File(baseDir, prefixName + DTM_TERMS_PREFIX + DTM_EXTENSION);
-		File dtmFileDocs = new File(baseDir, prefixName + DTM_DOCS_PREFIX + DTM_EXTENSION);
+		File dtmFileMain = new File(baseDir, corpusName + DTM.DTM_CORPUS_PREFIX + DTM.DTM_EXTENSION);
+		File dtmFileAux = new File(baseDir, corpusName + DTM.DTM_SEQUENCE_PREFIX + DTM.DTM_EXTENSION);
+		File dtmFileVocab = new File(baseDir, corpusName + DTM.DTM_TERMS_PREFIX + DTM.DTM_EXTENSION);
+		File dtmFileDocs = new File(baseDir, corpusName + DTM.DTM_DOCS_PREFIX + DTM.DTM_EXTENSION);
+		this.basedir = baseDir;
+		this.corpusName = corpusName;
 		
 		try {
 			dtmMain = new FileOutputStream(dtmFileMain);
@@ -198,11 +204,11 @@ public class BibTeX2DTM
 		BufferedWriter seqWriter = new BufferedWriter(new OutputStreamWriter(dtmAux));
 		BufferedWriter termsWriter = new BufferedWriter(new OutputStreamWriter(dtmVocab));
 		BufferedWriter docsWriter = new BufferedWriter(new OutputStreamWriter(dtmDocs));
-		List<Integer> periods = new ArrayList<Integer>();
 		int currentYear = 0;
 		int docsPerPeriod = 0;
 		
 		
+		periods = new ArrayList<Integer>();
 		Iterator<BibtexEntry> iDocs = entries.iterator();
 		while (iDocs.hasNext()) {
 			BibtexEntry entry = iDocs.next();
@@ -273,8 +279,6 @@ public class BibTeX2DTM
 	
 	public void read() throws IOException
 	{
-		int id = 1;
-
 		// Read data and sort entries by date (1st) and title (2nd)
 		for (InputStream is : inputs) {
 			ParserResult result = BibtexParser.parse(new InputStreamReader(is));
@@ -288,6 +292,13 @@ public class BibTeX2DTM
 			}
 		}
 		Collections.sort(entries, new BibTexEntryComparator());
+
+		TextStreamTokenizer parser = new UnformattedPlainTextStreamTokenizer();
+		TextPipelinePreprocessor preprocessor = new TextPipelinePreprocessor();
+		preprocessor.setUseStemmer(useStemmer);
+		preprocessor.setUseStopwords(useStopwords);
+		preprocessor.setLUCut(useLUCut);
+
 		
 		
         // Process files
@@ -295,66 +306,18 @@ public class BibTeX2DTM
 		while (iterator.hasNext()) {
 			BibtexEntry entry = iterator.next();
 			Map<String, Integer> entryTerms = new LinkedHashMap<String, Integer>();
+			DTMDocumentProcessorComponent documentProcessor = new DTMDocumentProcessorComponent(terms, entryTerms);
 			corpus.put(entry, entryTerms);
 			for (String field : fieldsToImport) {
 				String value = entry.getField(field);
 				if (value != null && ! value.trim().isEmpty()) {
-					TextStreamTokenizer parser = new UnformattedPlainTextStreamTokenizer();
-					TypedResourceConsumerStub<UnformattedTextResource> consumer = new TypedResourceConsumerStub<UnformattedTextResource>(UnformattedTextResource.class);
-					PipelinePreprocessor preprocessor = new PipelinePreprocessor();
-					
-					BufferComponent buffer = new BufferComponent();
-					
-					preprocessor.setUseStemmer(useStemmer);
-					preprocessor.setUseStopwords(useStopwords);
-					preprocessor.setLUCut(useLUCut);
-					parser.setConsumer(consumer);
 					parser.setReader(new StringReader(value));
-					parser.setConsumer(buffer);
-					buffer.setConsumer(preprocessor.getStart());
-					preprocessor.getEnd().setConsumer(consumer);
+					parser.setConsumer(preprocessor.getStart());
+					preprocessor.getEnd().setConsumer(documentProcessor);
 					parser.start();
 					parser.stop();
-					String[] words = consumer.getWords();
-					for (String word : words) {
-						// Account for word in the document
-						if (entryTerms.containsKey(word)) {
-							entryTerms.put(word, entryTerms.get(word) + 1);
-						} else {
-							entryTerms.put(word, 1);
-						}
-						
-						// Account for word in the collection, giving them an unique Id
-						if (! terms.containsKey(word)) {
-							terms.put(word, id);
-							id++;
-						}
-					}
-					parser.reset();
 				}
 			}
 		}
-	}
-	
-	public static void main(String[] args) throws IOException {
-		BibTeX2DTM b = new BibTeX2DTM();
-		String files[] = {
-				"SBSC-2004.bib",
-				"SBSC-2005.bib",
-				"SBSC-2006.bib",
-				"SBSC-2007.bib",
-				"SBSC-2008.bib",
-				"SBSC-2009.bib",
-				"SBSC-2010.bib",
-				"SBSC-2011.bib",
-				"SBSC-2012.bib",
-		};
-		b.setDefaultOutputStreams(new File("/tmp"), "SBSC");
-		for (String file : files) {
-			InputStream is = BibTeX2DTM.class.getResourceAsStream("/" + file);
-			b.addInputStream(is);
-		}
-		b.read();
-		b.write();
 	}
 }

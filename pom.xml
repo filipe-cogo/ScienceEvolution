@@ -92,19 +92,9 @@
 		</dependency>
 		-->
 		
-		<dependency>
-			<groupId>cc.mallet</groupId>
-			<artifactId>mallet</artifactId>
-			<version>[2.0.7,)</version>
-		</dependency>
 		
 		
 		<!-- SnowBall -->
-		<dependency>
-		    <groupId>org.tartarus</groupId>
-		    <artifactId>snowball</artifactId>
-		    <version>[1.0.2,)</version>
-		</dependency>
 		
 		
 		<!-- JabRef -->
@@ -116,30 +106,30 @@
 		
 		
 		<!-- Lucene -->
-		<dependency>
-			<groupId>org.apache.lucene</groupId>
-			<artifactId>lucene-core</artifactId>
-			<version>[4.2.0,)</version>
-		</dependency>
+
+            		
+		
 
 		<dependency>
-			<groupId>org.apache.lucene</groupId>
-			<artifactId>lucene-analyzers-common</artifactId>
-			<version>[4.2.0,)</version>
+			<groupId>ironiacorp</groupId>
+			<artifactId>commons-computer</artifactId>
+			<version>5.0.0-SNAPSHOT</version>
 		</dependency>
-            
 		<dependency>
-			<groupId>org.apache.lucene</groupId>
-			<artifactId>lucene-queries</artifactId>
-			<version>[4.2.0,)</version>
-		</dependency>		
-		
-		<dependency>
-			<groupId>org.apache.lucene</groupId>
-			<artifactId>lucene-queryparser</artifactId>
-			<version>[4.2.0,)</version>
+			<groupId>labes</groupId>
+			<artifactId>lode-miner</artifactId>
+			<version>0.4.0-SNAPSHOT</version>
 		</dependency>
-		
+		<dependency>
+			<groupId>labes</groupId>
+			<artifactId>lode-model</artifactId>
+			<version>0.4.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>ironiacorp</groupId>
+			<artifactId>commons-string</artifactId>
+			<version>5.0.0-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 
 	<build>

@@ -35,7 +35,7 @@ import lode.miner.preprocessing.text.stopword.exact.SetStopword;
 import lode.model.text.ProperNameTag;
 import lode.model.text.TextResource;
 
-public class PipelinePreprocessor
+public class TextPipelinePreprocessor
 {  
 	private ConsumerComponent start;
 	
@@ -87,7 +87,7 @@ public class PipelinePreprocessor
 		this.useLUCut.set(useLUCut);
 	}
 
-	public PipelinePreprocessor()
+	public TextPipelinePreprocessor()
 	{
 		useStemmer = new AtomicBoolean();
 		useStopwords = new AtomicBoolean();
