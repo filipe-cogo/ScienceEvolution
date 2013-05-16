@@ -35,7 +35,7 @@ import lode.miner.preprocessing.text.stopword.exact.SetStopword;
 import lode.model.text.ProperNameTag;
 import lode.model.text.TextResource;
 
-public class TextPipelinePreprocessor
+public class TextPipelinePreprocessor 
 {  
 	private ConsumerComponent start;
 	
@@ -193,6 +193,9 @@ public class TextPipelinePreprocessor
 		stopwordLoader.loadLanguage(stopwords, "/run/media/magsilva/magsilva-1TB/Projects/Lode/lode-miner/resources/", "en");
 		stopwordLoader.loadLanguage(stopwords, "/run/media/magsilva/magsilva-1TB/Projects/Lode/lode-miner/resources/", "latin");
 		stopwordLoader.load(stopwords, new File("/run/media/magsilva/magsilva-1TB/Projects/ScienceEvolution/resources/stopwords/stopwords-sbsc.txt"));
+		stopwordLoader.load(stopwords, new File("/run/media/magsilva/magsilva-1TB/Projects/ScienceEvolution/resources/stopwords/stopwords-ranks-default.txt"));
+		stopwordLoader.load(stopwords, new File("/run/media/magsilva/magsilva-1TB/Projects/ScienceEvolution/resources/stopwords/stopwords-ranks-google.txt"));
+		stopwordLoader.load(stopwords, new File("/run/media/magsilva/magsilva-1TB/Projects/ScienceEvolution/resources/stopwords/stopwords-ranks-mysql.txt"));
 		stopwordFilter.setStopWord(stopwords);
 		stopwordFilter.setConsumer(stemmerDecision);
 		

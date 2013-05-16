@@ -55,8 +55,8 @@ public class Util {
 					model.getBasedir() + File.separator + "lda-seq" + File.separator, topic);
 			BufferedReader reader = new BufferedReader(new FileReader(filename));
 			String text = null;
-			int term = 0;
 			
+			int term = 0;
 			do {
 				for (int year = 0; year < corpus.getYearsCount(); year++) {
 					text = reader.readLine();
@@ -69,7 +69,24 @@ public class Util {
 				}
 				term++;
 			} while (term < corpus.getTermsCount());
+			
+
+			/*
+			int year = 0;
+			do {
+				for (int term = 0; term < corpus.getTermsCount(); term++) {
+					text = reader.readLine();
+					if (text == null || StringUtil.isEmpty(text)) {
+						reader.close();
+						throw new IllegalArgumentException("Invalid input data");
+					}
+					double probabibility = Math.exp(Double.parseDouble(text));
+					cube[year][topic][term] = new Dupla<Integer, Double>(term, probabibility);
+				}
+				year++;
+			} while (year < corpus.getYearsCount());
 			reader.close();
+			*/
 		}
 	}
 
@@ -104,8 +121,11 @@ public class Util {
 			System.out.println("\n=========================ANO " + ano + " ==============================\n");
 			for (int topico = 0; topico < model.getTopicsCount(); topico++) {
 				System.out.println("\n---TOPICO " + topico + " --- ANO: " + ano 	+ " ---\n");
-				for (int i = 0; i < qtde; i++)
-					System.out.println(listaTermos[cube[ano][topico][i].getX()] + ";" + cube[ano][topico][i].getY());
+				for (int i = 0; i < qtde; i++) {
+					if (cube[ano][topico][i].getY() >= 0.01) {
+						System.out.println(listaTermos[cube[ano][topico][i].getX()] + ";" + cube[ano][topico][i].getY());
+					}
+				}
 			}
 		}
 

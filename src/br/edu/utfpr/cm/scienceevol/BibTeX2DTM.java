@@ -19,9 +19,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.ironiacorp.datastructure.array.ArrayUtil;
 
+
+import lode.miner.TypedResourceConsumerStub;
 import lode.miner.extraction.txt.TextStreamTokenizer;
 import lode.miner.extraction.txt.UnformattedPlainTextStreamTokenizer;
+import lode.model.text.TextResource;
+import lode.model.text.UnformattedTextResource;
 
 import net.sf.jabref.BibtexEntry;
 import net.sf.jabref.BibtexEntryType;
@@ -70,6 +75,9 @@ public class BibTeX2DTM
 	private OutputStream dtmDocs;
 
 	private String[] fieldsToImport = { "title", "abstract", "keywords" };
+	
+	private String[] fieldsToImportAsNLP = { "title", "abstract" };
+
 	
 	private List<BibtexEntry> entries;
 
@@ -293,8 +301,10 @@ public class BibTeX2DTM
 		}
 		Collections.sort(entries, new BibTexEntryComparator());
 
+		NLPTextPreprocessor nlpPreprocessor = new NLPTextPreprocessor();
 		TextStreamTokenizer parser = new UnformattedPlainTextStreamTokenizer();
 		TextPipelinePreprocessor preprocessor = new TextPipelinePreprocessor();
+
 		preprocessor.setUseStemmer(useStemmer);
 		preprocessor.setUseStopwords(useStopwords);
 		preprocessor.setLUCut(useLUCut);
@@ -311,6 +321,21 @@ public class BibTeX2DTM
 			for (String field : fieldsToImport) {
 				String value = entry.getField(field);
 				if (value != null && ! value.trim().isEmpty()) {
+					if (ArrayUtil.has(fieldsToImportAsNLP, field)) {
+				        TypedResourceConsumerStub<TextResource> consumer = new TypedResourceConsumerStub<>(TextResource.class);
+						TextResource textResource = new UnformattedTextResource();
+						StringBuilder sb = new StringBuilder();
+						textResource.setText(value);
+						nlpPreprocessor.setConsumer(consumer);
+						nlpPreprocessor.consume(textResource);
+						String[] words = consumer.getWords();
+						for (String word : words) {
+							sb.append(word);
+							sb.append(" ");
+						}
+						value = sb.toString();
+					}
+					
 					parser.setReader(new StringReader(value));
 					parser.setConsumer(preprocessor.getStart());
 					preprocessor.getEnd().setConsumer(documentProcessor);
