@@ -27,6 +27,22 @@ public class DTM implements Analyzer
 	public static final String DTM_OPTION_MODEL = "--model=";
 
 	
+	private double alpha = 0.01;
+
+	public static final String DTM_OPTION_ALPHA = "--alpha=";
+
+	
+	private int minIterations = 0;
+	
+	private int maxIterations = 10;
+
+	public static final String DTM_OPTION_LDA_SEQUENCE_MIN_ITERATIONS = "--lda_sequence_min_iter=";
+	
+	public static final String DTM_OPTION_LDA_SEQUENCE_MAX_ITERATIONS = "--lda_sequence_max_iter=";
+
+	public static final String DTM_OPTION_LDA_MAX_EM_ITERATIONS = "--lda_max_em_iter=";
+	
+	
 	public static final String DEFAULT_EXEC_FILENAME = "dtm";
 	
 	private ComputerArchitecture arch;
@@ -88,7 +104,6 @@ public class DTM implements Analyzer
 	
 	public static final String[] DEFAULT_OPTIONS = {
 		"--save_time=-1",
-		"--alpha=0.01",
 		"--mode=fit",
 		"--rng_seed=0",
 		"--initialize_lda=true",
@@ -97,9 +112,6 @@ public class DTM implements Analyzer
 		"--sigma_c=0.0001",
 		"--sigma_d=0.0001",
 		"--sigma_l=0.0001",
-		"--lda_max_em_iter=30",
-		"--lda_sequence_min_iter=10",
-		"--lda_sequence_max_iter=30",
 		"--top_obs_var=0.5",
 		"--top_chain_var=0.005"
 	};
@@ -111,6 +123,31 @@ public class DTM implements Analyzer
 		os = ComputerSystem.getCurrentOperationalSystem();
 		
 		dtmExecFilename = DEFAULT_EXEC_FILENAME + "-" + os.getNickname(arch);
+	}
+
+	
+	public double getAlpha() {
+		return alpha;
+	}
+
+	public void setAlpha(double alpha) {
+		this.alpha = alpha;
+	}
+
+	public int getMinIterations() {
+		return minIterations;
+	}
+
+	public void setMinIterations(int minIterations) {
+		this.minIterations = minIterations;
+	}
+
+	public int getMaxIterations() {
+		return maxIterations;
+	}
+
+	public void setMaxIterations(int maxIterations) {
+		this.maxIterations = maxIterations;
 	}
 
 	public String getCorpusPrefix() {
@@ -189,6 +226,7 @@ public class DTM implements Analyzer
 			parameters.add(defaults);
 		}
 		
+		parameters.add(DTM_OPTION_ALPHA + alpha);
 		parameters.add(DTM_OPTION_MODEL + ModelType.DTM.name);
 		parameters.add(DTM_OPTION_NTOPICS + topics);
 		parameters.add(DTM_OPTION_INFLUENCE_MEAN + paperCitedAfterYears);
@@ -196,6 +234,10 @@ public class DTM implements Analyzer
 		parameters.add(DTM_OPTION_YEARS_PERIOD + yearsPerPeriod);
 		parameters.add(DTM_OPTION_CORPUS_PREFIX + corpusPrefix);
 		parameters.add(DTM_OPTION_RESULTS_PREFIX + resultsPrefix + File.separator + ModelType.DTM.name);
+		parameters.add(DTM_OPTION_LDA_MAX_EM_ITERATIONS + maxIterations);
+		parameters.add(DTM_OPTION_LDA_SEQUENCE_MIN_ITERATIONS + minIterations);
+		parameters.add(DTM_OPTION_LDA_SEQUENCE_MAX_ITERATIONS + maxIterations);
+
 		ProcessBuilder pb = os.exec(executable, parameters);
 		pb.inheritIO();
 		try {

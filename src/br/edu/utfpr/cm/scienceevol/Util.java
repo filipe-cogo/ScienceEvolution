@@ -69,52 +69,34 @@ public class Util {
 				}
 				term++;
 			} while (term < corpus.getTermsCount());
-			
-
-			/*
-			int year = 0;
-			do {
-				for (int term = 0; term < corpus.getTermsCount(); term++) {
-					text = reader.readLine();
-					if (text == null || StringUtil.isEmpty(text)) {
-						reader.close();
-						throw new IllegalArgumentException("Invalid input data");
-					}
-					double probabibility = Math.exp(Double.parseDouble(text));
-					cube[year][topic][term] = new Dupla<Integer, Double>(term, probabibility);
-				}
-				year++;
-			} while (year < corpus.getYearsCount());
 			reader.close();
-			*/
 		}
 	}
 
 
-	/*
-	public void printXBetterResultsPerYearPerTopicInFile(int qtde) throws IOException {
+	public void printXBetterResultsPerYearPerTopicInFile(double probability) throws IOException {
 		FileWriter fw = new FileWriter(new File(
 				corpus.getBasedir() + File.separator +
-				DTM.ModelType.DTM + File.separator +
+				DTM.ModelType.DTM.name + File.separator +
 				"lda-seq" + File.separator +
 				"Year-Topic-Term-Prob.csv"));
 		fw.write("Year;Topic;Term;Probability\n");
 		for (int ano = 0; ano < corpus.getYearsCount(); ano++) {
 			for (int topico = 0; topico < model.getTopicsCount(); topico++) {
-				for (int i = 0; i < qtde; i++)
+				for (int term = 0; cube[ano][topico][term].getY() > probability && term < (corpus.getTermsCount() - 1); term++) {
 					fw.write(ano + 
 							";" + 
 							topico + 
 							";" + 
-							listaTermos[cube[ano][topico][i].getX()] + 
+							listaTermos[cube[ano][topico][term].getX()] + 
 							";" + 
-							cube[ano][topico][i].getY() +
+							cube[ano][topico][term].getY() +
 							"\n");
+				}
 			}
 		}
 		fw.close();
 	}
-	*/
 	
 	public void printXBetterResultsPerYearPerTopic(int qtde) {
 		for (int ano = 0; ano < corpus.getYearsCount(); ano++) {

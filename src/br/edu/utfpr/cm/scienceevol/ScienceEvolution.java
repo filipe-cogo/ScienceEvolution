@@ -84,11 +84,16 @@ public class ScienceEvolution
 		corpus = bib2dtm.getCorpus();
 			
 		DTM dtm = new DTM();
-		dtm.suggestSearchPath(new File("/run/media/magsilva/magsilva-1TB/Projects/dtm/dtm"));
+		dtm.suggestSearchPath(new File("/home/magsilva/Dropbox/Papers/10thSBSC/resources/dtm"));
+		// TODO: adicionar caminho para o diretório com o executável com o DTM no computador de vocês
+		dtm.suggestSearchPath(new File("/home/magsilva/Dropbox/Papers/10thSBSC/resources/dtm"));
 		dtm.setPaperCitedAfterYears(1.0);
 		dtm.setPaperCitedAfterYearsStdDev(2.0);
 		dtm.setTopics(topics);
 		dtm.setYearsPerPeriod(1);
+		dtm.setAlpha(0.5);
+		dtm.setMinIterations(5);
+		dtm.setMaxIterations(100);
 		dtm.setCorpusPrefix(basedir.getAbsolutePath() + File.separator + corpusName);
 		dtm.setResultsPrefix(basedir.getAbsolutePath() + File.separator);
 		dtmModel = dtm.runFit();
@@ -101,6 +106,7 @@ public class ScienceEvolution
 		util.update();
 		util.orderResultsPerYearPerTopic();
 		util.printXBetterResultsPerYearPerTopic(topTermsPerTopic);
+		util.printXBetterResultsPerYearPerTopicInFile(0.01);
 	}
 	
 	public static void main(String[] args) throws Exception {
@@ -119,7 +125,7 @@ public class ScienceEvolution
 	
 		evolution.setBasedir(new File("/tmp/SBSC"));
 		evolution.setCorpusName("SBSC");
-		evolution.setTopics(25);
+		evolution.setTopics(15);
 		for (String file : files) {
 			InputStream is = BibTeX2DTM.class.getResourceAsStream("/" + file);
 			evolution.addInput(is);

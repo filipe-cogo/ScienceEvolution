@@ -303,7 +303,8 @@ public class BibTeX2DTM
 
 		NLPTextPreprocessor nlpPreprocessor = new NLPTextPreprocessor();
 		TextStreamTokenizer parser = new UnformattedPlainTextStreamTokenizer();
-		TextPipelinePreprocessor preprocessor = new TextPipelinePreprocessor();
+		TextPipelinePreprocessor preprocessor = new AlternativeTextPipelinePreprocessor();
+		//TextPipelinePreprocessor preprocessor = new DefaultTextPipelinePreprocessor();
 
 		preprocessor.setUseStemmer(useStemmer);
 		preprocessor.setUseStopwords(useStopwords);
@@ -321,6 +322,7 @@ public class BibTeX2DTM
 			for (String field : fieldsToImport) {
 				String value = entry.getField(field);
 				if (value != null && ! value.trim().isEmpty()) {
+					/*
 					if (ArrayUtil.has(fieldsToImportAsNLP, field)) {
 				        TypedResourceConsumerStub<TextResource> consumer = new TypedResourceConsumerStub<>(TextResource.class);
 						TextResource textResource = new UnformattedTextResource();
@@ -335,6 +337,7 @@ public class BibTeX2DTM
 						}
 						value = sb.toString();
 					}
+					*/
 					
 					parser.setReader(new StringReader(value));
 					parser.setConsumer(preprocessor.getStart());
