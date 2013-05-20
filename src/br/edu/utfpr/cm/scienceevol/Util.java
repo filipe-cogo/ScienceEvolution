@@ -4,9 +4,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.IOException;
-
-import com.ironiacorp.string.StringUtil;
 
 public class Util {
 
@@ -29,6 +26,7 @@ public class Util {
 		try {
 			listaTermos = leiaTermos();
 			gimmeCubao();
+			orderResultsPerYearPerTopic();
 		} catch (Exception e) {
 			throw new IllegalArgumentException("Could not load required data (terms)", e);
 		}
@@ -36,6 +34,7 @@ public class Util {
 
 	protected String[] leiaTermos() throws Exception
 	{
+		System.out.println("Lendo termos de: " + corpus.getBasedir() + File.separator + corpus.getName() + DTM.DTM_TERMS_PREFIX + DTM.DTM_EXTENSION);
 		File file = new File(corpus.getBasedir() + File.separator + corpus.getName() + DTM.DTM_TERMS_PREFIX + DTM.DTM_EXTENSION);
 		BufferedReader reader = new BufferedReader(new FileReader(file));
 		String nextLine;
@@ -60,7 +59,7 @@ public class Util {
 			do {
 				for (int year = 0; year < corpus.getYearsCount(); year++) {
 					text = reader.readLine();
-					if (text == null || StringUtil.isEmpty(text)) {
+					if (text == null || text.length() == 0) {
 						reader.close();
 						throw new IllegalArgumentException("Invalid input data");
 					}
@@ -69,11 +68,16 @@ public class Util {
 				}
 				term++;
 			} while (term < corpus.getTermsCount());
+<<<<<<< HEAD
+=======
+			
+>>>>>>> Chage in Util.java in order to adjust the ordering of probabilities of terms in topics.
 			reader.close();
 		}
 	}
 
 
+<<<<<<< HEAD
 	public void printXBetterResultsPerYearPerTopicInFile(double probability) throws IOException {
 		FileWriter fw = new FileWriter(new File(
 				corpus.getBasedir() + File.separator +
@@ -84,6 +88,31 @@ public class Util {
 		for (int ano = 0; ano < corpus.getYearsCount(); ano++) {
 			for (int topico = 0; topico < model.getTopicsCount(); topico++) {
 				for (int term = 0; cube[ano][topico][term].getY() > probability && term < (corpus.getTermsCount() - 1); term++) {
+=======
+	
+	public void printXBetterResultsPerYearPerTopicInFile(int qtde) throws Exception {
+		update();
+		FileWriter fw = new FileWriter(new File("/Users/filiperoseirocogo/Documents/workspace/Cubao/Year-Topic-Term-Prob.csv"));
+		//FileWriter fw = new FileWriter(new File(
+		//	corpus.getBasedir() + File.separator +
+		//		DTM.ModelType.DTM + File.separator +
+		//		"lda-seq" + File.separator +
+		//		"Year-Topic-Term-Prob.csv"));
+		fw.write("Year;Topic;Term;Probability\n");
+		for (int ano = 0; ano < corpus.getYearsCount(); ano++) {
+			for (int topico = 0; topico < model.getTopicsCount(); topico++) {
+				for (int i = 0; i < qtde; i++){
+					//System.out.println(i);
+					//System.out.println(cube[ano][topico][i]);
+					System.out.println(ano + 
+							";" + 
+							topico + 
+							";" + 
+							listaTermos[cube[ano][topico][i].getX()] + 
+							";" + 
+							cube[ano][topico][i].getY() +
+							"\n");
+>>>>>>> Chage in Util.java in order to adjust the ordering of probabilities of terms in topics.
 					fw.write(ano + 
 							";" + 
 							topico + 
@@ -97,6 +126,10 @@ public class Util {
 		}
 		fw.close();
 	}
+<<<<<<< HEAD
+=======
+	
+>>>>>>> Chage in Util.java in order to adjust the ordering of probabilities of terms in topics.
 	
 	public void printXBetterResultsPerYearPerTopic(int qtde) {
 		for (int ano = 0; ano < corpus.getYearsCount(); ano++) {

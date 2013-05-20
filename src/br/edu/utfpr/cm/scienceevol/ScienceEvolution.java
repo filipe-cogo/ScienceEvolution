@@ -84,9 +84,13 @@ public class ScienceEvolution
 		corpus = bib2dtm.getCorpus();
 			
 		DTM dtm = new DTM();
+<<<<<<< HEAD
 		dtm.suggestSearchPath(new File("/home/magsilva/Dropbox/Papers/10thSBSC/resources/dtm"));
 		// TODO: adicionar caminho para o diretório com o executável com o DTM no computador de vocês
 		dtm.suggestSearchPath(new File("/home/magsilva/Dropbox/Papers/10thSBSC/resources/dtm"));
+=======
+		dtm.suggestSearchPath(new File("/Users/filiperoseirocogo/Dropbox/Anais SBSC/resources/dtm"));
+>>>>>>> Chage in Util.java in order to adjust the ordering of probabilities of terms in topics.
 		dtm.setPaperCitedAfterYears(1.0);
 		dtm.setPaperCitedAfterYearsStdDev(2.0);
 		dtm.setTopics(topics);
@@ -123,7 +127,7 @@ public class ScienceEvolution
 				"SBSC-2012.bib",
 		};
 	
-		evolution.setBasedir(new File("/tmp/SBSC"));
+		evolution.setBasedir(new File("/Users/filiperoseirocogo/Dropbox/Anais SBSC/resources/tmp/SBSC"));
 		evolution.setCorpusName("SBSC");
 		evolution.setTopics(15);
 		for (String file : files) {
